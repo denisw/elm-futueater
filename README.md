@@ -1,6 +1,6 @@
-# FutuInvaders
+# FutuEater
 
-A 2d game written in Elm.
+A PacMan clone written in Elm.
 
 ## Possibly useful resources
 
