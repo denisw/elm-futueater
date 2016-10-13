@@ -2,6 +2,10 @@
 
 A PacMan clone written in Elm.
 
+## Elm-format
+
+Maybe? https://github.com/avh4/elm-format
+
 ## Possibly useful resources
 
 * http://package.elm-lang.org/packages/elm-community/elm-webgl/latest
