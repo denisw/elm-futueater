@@ -4,20 +4,32 @@ import Html.App
 main : Program Never
 main =
   Html.App.beginnerProgram
-    { model = { player = { x = 0, y = 0 }, invaders = [] }
+    { model = { score = 0, board = initialBoard }
     , view = view
     , update = update
     }
 
+initialBoard : Board
+initialBoard =
+  []
+
 -- Model
-type alias Drawable =
+type alias Entity =
   { x : Float
   , y : Float
   }
 
+type Cell =
+  Agent Entity
+  | Wall
+  | Food
+  | Empty
+
+type alias Board = List (List Cell)
+
 type alias Model =
-  { player : Drawable
-  , invaders : List Drawable
+  { score : Int
+  , board : Board
   }
 
 -- Update
