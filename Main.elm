@@ -38,8 +38,15 @@ type alias Point =
     }
 
 
+type alias Size =
+    { width : Float
+    , height : Float
+    }
+
+
 type alias Agent =
     { position : Point
+    , size : Size
     , direction : Direction
     }
 
@@ -66,6 +73,10 @@ init =
     ( { score = 0
       , player =
             { position = { x = 0, y = 0 }
+            , size =
+                { width = 25
+                , height = 25
+                }
             , direction = Right
             }
       , map = initialMap
@@ -107,8 +118,14 @@ update msg model =
                     moveDistance =
                         playerSpeed * Time.inSeconds time
 
-                    newPlayer =
+                    movedPlayer =
                         moveAgent player moveDistance
+
+                    newPlayer =
+                        if List.any (checkCollision movedPlayer) model.map then
+                            player
+                        else
+                            movedPlayer
                 in
                     ( { model | player = newPlayer }, Cmd.none )
 
@@ -152,6 +169,42 @@ shiftPoint point xOffset yOffset =
 playerSpeed : Float
 playerSpeed =
     100
+
+
+checkCollision : Agent -> Wall -> Bool
+checkCollision agent wall =
+    let
+        agentTopLeft =
+            agent.position
+
+        agentBottomRight =
+            { x = agent.position.x + agent.size.width
+            , y = agent.position.y + agent.size.height
+            }
+
+        wallTopLeft =
+            { x = gridToPixels wall.columnNumber
+            , y = gridToPixels wall.rowNumber
+            }
+
+        wallBottomRight =
+            { x = wallTopLeft.x + gridPixelRatio
+            , y = wallTopLeft.y + gridPixelRatio
+            }
+
+        xOverlapsWall =
+            isBetween wallTopLeft.x wallBottomRight.x
+
+        yOverlapsWall =
+            isBetween wallTopLeft.y wallBottomRight.y
+    in
+        (xOverlapsWall agentTopLeft.x || xOverlapsWall agentBottomRight.x)
+            && (yOverlapsWall agentTopLeft.y || yOverlapsWall agentBottomRight.y)
+
+
+isBetween : Float -> Float -> Float -> Bool
+isBetween min max value =
+    value >= min && value <= max
 
 
 
@@ -206,8 +259,8 @@ walls walls =
                     , ( "width", "30px" )
                     , ( "height", "30px" )
                     , ( "position", "absolute" )
-                    , ( "top", (columnNumber |> gridToPixels |> toString) ++ "px" )
-                    , ( "left", (rowNumber |> gridToPixels |> toString) ++ "px" )
+                    , ( "top", (rowNumber |> gridToPixels |> toString) ++ "px" )
+                    , ( "left", (columnNumber |> gridToPixels |> toString) ++ "px" )
                     ]
                 ]
                 []
@@ -219,19 +272,19 @@ walls walls =
 -- Position Helpers
 
 
-gridPixelRatio : Int
+gridPixelRatio : Float
 gridPixelRatio =
     30
 
 
-gridToPixels : Int -> Int
+gridToPixels : Int -> Float
 gridToPixels value =
-    value * gridPixelRatio
+    (toFloat value) * gridPixelRatio
 
 
-pixelsToGrid : Int -> Int
+pixelsToGrid : Float -> Int
 pixelsToGrid value =
-    value // gridPixelRatio
+    round (value / gridPixelRatio)
 
 
 
