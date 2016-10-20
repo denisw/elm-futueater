@@ -44,17 +44,46 @@ type alias Agent =
     }
 
 
+type alias Wall =
+    { columnNumber : Int
+    , rowNumber : Int
+    }
+
+
+type alias Map =
+    List Wall
+
+
 type alias Model =
     { score : Int
     , player : Agent
+    , map : Map
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { score = 0, player = { position = { x = 0, y = 0 }, direction = Right } }
+    ( { score = 0
+      , player =
+            { position = { x = 0, y = 0 }
+            , direction = Right
+            }
+      , map = initialMap
+      }
     , Cmd.none
     )
+
+
+initialMap : Map
+initialMap =
+    [ { columnNumber = 10, rowNumber = 10 }
+    , { columnNumber = 11, rowNumber = 10 }
+    , { columnNumber = 12, rowNumber = 10 }
+    , { columnNumber = 10, rowNumber = 11 }
+    , { columnNumber = 12, rowNumber = 11 }
+    , { columnNumber = 10, rowNumber = 12 }
+    , { columnNumber = 12, rowNumber = 12 }
+    ]
 
 
 
@@ -133,8 +162,9 @@ view : Model -> Html Msg
 view model =
     background
         [ div []
-            [ player model
-            ]
+            ([ player model ]
+                ++ (walls model.map)
+            )
         ]
 
 
@@ -164,6 +194,40 @@ player model =
             ]
         ]
         []
+
+
+gridPixelRatio : Int
+gridPixelRatio =
+    30
+
+
+gridToPixels : Int -> Int
+gridToPixels value =
+    value * gridPixelRatio
+
+
+pixelsToGrid : Int -> Int
+pixelsToGrid value =
+    value // gridPixelRatio
+
+
+walls : Map -> List (Html Msg)
+walls walls =
+    let
+        drawWall { columnNumber, rowNumber } =
+            div
+                [ style
+                    [ ( "backgroundColor", "blue" )
+                    , ( "width", "30px" )
+                    , ( "height", "30px" )
+                    , ( "position", "absolute" )
+                    , ( "top", (columnNumber |> gridToPixels |> toString) ++ "px" )
+                    , ( "left", (rowNumber |> gridToPixels |> toString) ++ "px" )
+                    ]
+                ]
+                []
+    in
+        List.map drawWall walls
 
 
 
