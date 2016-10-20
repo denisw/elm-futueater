@@ -162,7 +162,7 @@ view : Model -> Html Msg
 view model =
     background
         [ div []
-            ([ player model ]
+            ([ player model.player ]
                 ++ (walls model.map)
             )
         ]
@@ -180,8 +180,8 @@ background content =
         content
 
 
-player : Model -> Html Msg
-player model =
+player : Agent -> Html Msg
+player { position, direction } =
     div
         [ style
             [ ( "backgroundColor", "yellow" )
@@ -189,26 +189,11 @@ player model =
             , ( "height", "30px" )
             , ( "borderRadius", "15px" )
             , ( "position", "absolute" )
-            , ( "left", toString model.player.position.x ++ "px" )
-            , ( "top", toString model.player.position.y ++ "px" )
+            , ( "left", toString position.x ++ "px" )
+            , ( "top", toString position.y ++ "px" )
             ]
         ]
         []
-
-
-gridPixelRatio : Int
-gridPixelRatio =
-    30
-
-
-gridToPixels : Int -> Int
-gridToPixels value =
-    value * gridPixelRatio
-
-
-pixelsToGrid : Int -> Int
-pixelsToGrid value =
-    value // gridPixelRatio
 
 
 walls : Map -> List (Html Msg)
@@ -228,6 +213,25 @@ walls walls =
                 []
     in
         List.map drawWall walls
+
+
+
+-- Position Helpers
+
+
+gridPixelRatio : Int
+gridPixelRatio =
+    30
+
+
+gridToPixels : Int -> Int
+gridToPixels value =
+    value * gridPixelRatio
+
+
+pixelsToGrid : Int -> Int
+pixelsToGrid value =
+    value // gridPixelRatio
 
 
 
