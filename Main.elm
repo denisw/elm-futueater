@@ -148,10 +148,10 @@ moveAgent agent distance =
                     shiftPoint agent.position distance 0
 
                 Up ->
-                    shiftPoint agent.position 0 distance
+                    shiftPoint agent.position 0 -distance
 
                 Down ->
-                    shiftPoint agent.position 0 -distance
+                    shiftPoint agent.position 0 distance
     in
         { agent | position = newPosition }
 
@@ -300,13 +300,13 @@ subscriptions model =
                     Left
 
                 38 ->
-                    Down
+                    Up
 
                 39 ->
                     Right
 
                 40 ->
-                    Up
+                    Down
 
                 _ ->
                     model.player.direction
