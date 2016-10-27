@@ -154,35 +154,43 @@ update msg model =
                 ( { model | player = { player | direction = direction } }, Cmd.none )
 
 
+{-| Takes a time, a player, a list of collidables and a ghost, and returns the
+ghost with the dirction updated to be optimised for catching the player.
+-}
 updateGhostDirection : Time.Time -> Agent -> Map -> Agent -> Agent
 updateGhostDirection time player walls ghost =
     let
         moveDistance =
             ghostSpeed * Time.inSeconds time
 
-        newGhost =
+        optimalGhost =
             List.map ((agentWithDirection ghost) >> (moveAgent moveDistance)) [ Up, Down, Left, Right ]
                 |> List.Extra.minimumBy (distanceBetweenAgents player)
                 |> Maybe.withDefault ghost
     in
-        { ghost | direction = newGhost.direction }
+        { ghost | direction = optimalGhost.direction }
 
 
+{-| Takes an agent and a direction and returns the agent updated to have that
+direction.
+-}
 agentWithDirection : Agent -> Direction -> Agent
 agentWithDirection agent direction =
     { agent | direction = direction }
 
 
+{-| Takes two agents and returns the Manhattan distance between them.
+-}
 distanceBetweenAgents : Agent -> Agent -> Float
 distanceBetweenAgents firstAgent secondAgent =
     let
-        xDiff =
+        deltaX =
             abs (firstAgent.position.x - secondAgent.position.x)
 
-        yDiff =
+        deltaY =
             abs (firstAgent.position.y - secondAgent.position.y)
     in
-        xDiff + yDiff
+        deltaX + deltaY
 
 
 {-| Takes an agent and a distance and moves the agent according to its
