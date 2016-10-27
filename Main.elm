@@ -6,6 +6,7 @@ import Html.App
 import AnimationFrame exposing (diffs)
 import Keyboard exposing (downs)
 import Time exposing (inSeconds)
+import List.Extra exposing (minimumBy)
 
 
 -- Main
@@ -125,7 +126,7 @@ update msg model =
                     speed * Time.inSeconds time
 
                 movedAgent =
-                    moveAgent agent moveDistance
+                    moveAgent moveDistance agent
             in
                 if List.any (checkCollision movedAgent) collidables then
                     agent
@@ -142,7 +143,7 @@ update msg model =
                         updateAgent playerSpeed time model.map player
 
                     directionGhosts =
-                        List.map (updateGhostDirection time player) model.ghosts
+                        List.map (updateGhostDirection time player model.map) model.ghosts
 
                     newGhosts =
                         List.map (updateAgent ghostSpeed time model.map) directionGhosts
@@ -153,48 +154,42 @@ update msg model =
                 ( { model | player = { player | direction = direction } }, Cmd.none )
 
 
-updateGhostDirection : Time.Time -> Agent -> Agent -> Agent
-updateGhostDirection time player ghost =
+updateGhostDirection : Time.Time -> Agent -> Map -> Agent -> Agent
+updateGhostDirection time player walls ghost =
     let
         moveDistance =
             ghostSpeed * Time.inSeconds time
 
-        xDiff =
-            ghost.position.x - player.position.x
+        newGhost =
+            List.map ((agentWithDirection ghost) >> (moveAgent moveDistance)) [ Up, Down, Left, Right ]
+                |> List.Extra.minimumBy (distanceBetweenAgents player)
+                |> Maybe.withDefault ghost
+    in
+        { ghost | direction = newGhost.direction }
 
-        xDirection =
-            if xDiff < 0 then
-                Right
-            else
-                Left
+
+agentWithDirection : Agent -> Direction -> Agent
+agentWithDirection agent direction =
+    { agent | direction = direction }
+
+
+distanceBetweenAgents : Agent -> Agent -> Float
+distanceBetweenAgents firstAgent secondAgent =
+    let
+        xDiff =
+            abs (firstAgent.position.x - secondAgent.position.x)
 
         yDiff =
-            ghost.position.y - player.position.y
-
-        yDirection =
-            if yDiff < 0 then
-                Down
-            else
-                Up
-
-        direction =
-            if abs xDiff < moveDistance then
-                yDirection
-            else if abs yDiff < moveDistance then
-                xDirection
-            else if abs xDiff < abs yDiff then
-                xDirection
-            else
-                yDirection
+            abs (firstAgent.position.y - secondAgent.position.y)
     in
-        { ghost | direction = direction }
+        xDiff + yDiff
 
 
 {-| Takes an agent and a distance and moves the agent according to its
 direction.
 -}
-moveAgent : Agent -> Float -> Agent
-moveAgent agent distance =
+moveAgent : Float -> Agent -> Agent
+moveAgent distance agent =
     let
         newPosition =
             case agent.direction of
