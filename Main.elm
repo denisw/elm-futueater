@@ -64,6 +64,7 @@ type alias Map =
 type alias Model =
     { score : Int
     , player : Agent
+    , ghosts : List Agent
     , map : Map
     }
 
@@ -79,6 +80,15 @@ init =
                 }
             , direction = Right
             }
+      , ghosts =
+            [ { position = { x = 200, y = 50 }
+              , size =
+                    { width = 30
+                    , height = 30
+                    }
+              , direction = Down
+              }
+            ]
       , map = initialMap
       }
     , Cmd.none
@@ -109,28 +119,75 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
+        updateAgent speed time collidables agent =
+            let
+                moveDistance =
+                    speed * Time.inSeconds time
+
+                movedAgent =
+                    moveAgent agent moveDistance
+            in
+                if List.any (checkCollision movedAgent) collidables then
+                    agent
+                else
+                    movedAgent
+
         player =
             model.player
     in
         case msg of
             Tick time ->
                 let
-                    moveDistance =
-                        playerSpeed * Time.inSeconds time
-
-                    movedPlayer =
-                        moveAgent player moveDistance
-
                     newPlayer =
-                        if List.any (checkCollision movedPlayer) model.map then
-                            player
-                        else
-                            movedPlayer
+                        updateAgent playerSpeed time model.map player
+
+                    directionGhosts =
+                        List.map (updateGhostDirection time player) model.ghosts
+
+                    newGhosts =
+                        List.map (updateAgent ghostSpeed time model.map) directionGhosts
                 in
-                    ( { model | player = newPlayer }, Cmd.none )
+                    ( { model | player = newPlayer, ghosts = newGhosts }, Cmd.none )
 
             ChangeDirection direction ->
                 ( { model | player = { player | direction = direction } }, Cmd.none )
+
+
+updateGhostDirection : Time.Time -> Agent -> Agent -> Agent
+updateGhostDirection time player ghost =
+    let
+        moveDistance =
+            ghostSpeed * Time.inSeconds time
+
+        xDiff =
+            ghost.position.x - player.position.x
+
+        xDirection =
+            if xDiff < 0 then
+                Right
+            else
+                Left
+
+        yDiff =
+            ghost.position.y - player.position.y
+
+        yDirection =
+            if yDiff < 0 then
+                Down
+            else
+                Up
+
+        direction =
+            if abs xDiff < moveDistance then
+                yDirection
+            else if abs yDiff < moveDistance then
+                xDirection
+            else if abs xDiff < abs yDiff then
+                xDirection
+            else
+                yDirection
+    in
+        { ghost | direction = direction }
 
 
 {-| Takes an agent and a distance and moves the agent according to its
@@ -169,6 +226,11 @@ shiftPoint point xOffset yOffset =
 playerSpeed : Float
 playerSpeed =
     100
+
+
+ghostSpeed : Float
+ghostSpeed =
+    80
 
 
 checkCollision : Agent -> Wall -> Bool
@@ -216,6 +278,7 @@ view model =
     background
         [ div []
             ([ player model.player ]
+                ++ List.map ghost model.ghosts
                 ++ (walls model.map)
             )
         ]
@@ -234,10 +297,20 @@ background content =
 
 
 player : Agent -> Html Msg
-player { position, direction } =
+player player =
+    agent player "yellow"
+
+
+ghost : Agent -> Html Msg
+ghost ghost =
+    agent ghost "cyan"
+
+
+agent : Agent -> String -> Html Msg
+agent { position, direction } color =
     div
         [ style
-            [ ( "backgroundColor", "yellow" )
+            [ ( "backgroundColor", color )
             , ( "width", "30px" )
             , ( "height", "30px" )
             , ( "borderRadius", "15px" )
