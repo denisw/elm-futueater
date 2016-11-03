@@ -7,6 +7,7 @@ import AnimationFrame exposing (diffs)
 import Keyboard exposing (downs)
 import Time exposing (inSeconds)
 import List.Extra exposing (minimumBy)
+import Agent exposing (..)
 
 
 -- Main
@@ -24,32 +25,6 @@ main =
 
 
 -- Model
-
-
-type Direction
-    = Left
-    | Right
-    | Up
-    | Down
-
-
-type alias Point =
-    { x : Float
-    , y : Float
-    }
-
-
-type alias Size =
-    { width : Float
-    , height : Float
-    }
-
-
-type alias Agent =
-    { position : Point
-    , size : Size
-    , direction : Direction
-    }
 
 
 type alias Wall =
@@ -113,7 +88,7 @@ initialMap =
 
 
 type Msg
-    = Tick Float
+    = Tick Time.Time
     | ChangeDirection Direction
 
 
